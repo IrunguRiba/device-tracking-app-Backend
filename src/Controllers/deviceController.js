@@ -3,20 +3,23 @@ const User = require("../Models/user");
 const Locations = require("../Models/location");
 const mongoose = require("mongoose");
 
-// Create and Save a new Device
 
 module.exports = {
   registerMyDevice: async (req, res) => {
-    const { userId, name, type, model, description} = req.body;
-    try {
-    
-        
-        const existingUser = await User.findById(userId);
+
+    const {_id} = req.params;
+    const { name, type, model, description} = req.body;
+
+    try {       
+
+        const existingUser = await User.findById(_id);
+
       if (!existingUser) {
         return res.status(401).json({
           message: "Cannot register Device to this user, User does not exist",
         });
       }
+
       console.log("User deviceInfo value:", existingUser.deviceInfo);
 
       if (existingUser.deviceInfo) {
@@ -25,16 +28,9 @@ module.exports = {
           existingDevice: existingUser.deviceInfo
         });
       }
-      
 
-      const newDevice = new Device({
-        name,
-        type,
-        model,
-        description
-      });
+      const newDevice = new Device({ name, type, model, description,  userId: existingUser._id});
      
-
       const savedDevice = await newDevice.save();
 
       existingUser.deviceInfo = savedDevice._id;
@@ -68,14 +64,12 @@ module.exports = {
         console.log("Device not found");
         return res.status(404).json({ message: `Device ${_id} not found` });
       }
-
       if(requestedDevice.location && requestedDevice.location.length>0){
         requestedDevice.location.sort((lastestTime, lastTime)=>{
           return lastTime.timestamp-lastestTime.timestamp
-
         })
       }
-      res.status(200).json({
+      res.status(201).json({
         message: "Device found successifully",
         Device: requestedDevice,
         LatestLocation: requestedDevice.location[0] || null
@@ -91,7 +85,7 @@ module.exports = {
   },
 
   updateMyDevice: async (req, res) => {
-    const { _id } = req.params;
+    const {_id} = req.params;
     const updateData = req.body;
 
     try {
@@ -99,12 +93,7 @@ module.exports = {
         return res.status(400).json({ message: "Invalid ID format" });
       }
 
-      const updatedDevice = await Device.findOneAndUpdate(
-        { _id },
-        { $set: updateData },
-        { new: true }
-      )
-        .populate("location", "longitude latitude timestamp");
+      const updatedDevice = await Device.findOneAndUpdate( { _id }, { $set: updateData }, { new: true }).populate("location", "longitude latitude timestamp");
 
       if (!updatedDevice) {
         return res.status(404).json({
@@ -129,12 +118,19 @@ module.exports = {
     const { _id } = req.params;
 
     try {
+      if (!mongoose.Types.ObjectId.isValid(_id)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
       const existingDevice = await Device.findOneAndDelete({ _id }).populate(
         "location",
         "longitude latitude timestamp"
       );
 
+
       if (!existingDevice) {
+        res.status(400).json({
+          message: "Failed! No user found to delete"
+        })
         console.log("Device does not exist");
       }
 
@@ -156,3 +152,8 @@ module.exports = {
     }
   },
 };
+
+
+
+
+

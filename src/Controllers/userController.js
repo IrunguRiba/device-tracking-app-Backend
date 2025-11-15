@@ -98,7 +98,7 @@ module.exports = {
       }
 
       res.status(200).json({
-        message: `Logged in successifully, Welcome back Admin${user.userName}`,
+        message: `Logged in successifully, Welcome back Admin ${user.userName}`,
         user: user,
         userLoggedIn: true,
       });
@@ -138,14 +138,17 @@ module.exports = {
   getUsers: async(req, res) => {
     try {
       const users = await User.find().populate({
-        path: "devices", 
+        path: "deviceInfo", 
         select: "name model type description status",
         populate: {
           path: "location",
           select: "longitude latitude timestamp -_id"
         }
       });
-      res.status(200).json({ users });
+      res.status(200).json({ 
+        message: "Users fetched successfully",
+        All_Users: users
+      });
     } catch (error) {
       res.status(500).json({ message: "Error fetching users", error: error.message });
     }
@@ -191,7 +194,7 @@ const userIsAt=requestedUser.deviceInfo?.location?.[0] || "User location unavail
           populate: {
             path: 'location',
             select: 'latitude longitude timestamp -_id', 
-          }
+          },
     });
 
     if(!existingUser){
@@ -221,5 +224,35 @@ const userIsAt=existingUser.deviceInfo?.location?.[0] || "User location unavaila
     console.log(error)
   }
 
+ },
+
+ deleteUserById: async (req, res)=>{
+  const {_id}= req.params
+  try {
+
+    if (!mongoose.Types.ObjectId.isValid(_id)) {
+      return res.status(400).json({ message: "Invalid ID format" });
+    }
+     const existingUser= await User.findByIdAndDelete(_id)
+
+     if(!existingUser){
+res.status(400).json({
+  message: "Something went wrong, user does not exist!"
+})
+     }
+     res.status(200).json({
+      message: "Success... User deleted successifully",
+     Deleted_User: existingUser
+     })
+
+     
+    
+  } catch (error) {
+    res.status(500).json({
+      message: "Cannot delete user, server problem",
+      Error: error.message || error
+    })
+    
+  }
  }
-};
+ };

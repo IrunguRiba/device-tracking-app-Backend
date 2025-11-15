@@ -44,6 +44,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false,
     unique: true,
+  },
+  trackedDevices:{
+    type: [],
+    required:false,
+    default: null
   }
 });
 

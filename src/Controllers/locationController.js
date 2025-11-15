@@ -35,12 +35,7 @@ function getLocationFromFrontEndandSave(httpServer) {
           return;
         }
 
-        const newDeviceLocation = await Location.create({
-          latitude,
-          longitude,
-          userId,
-          deviceId
-        });
+        const newDeviceLocation = await Location.create({ latitude, longitude, userId,  deviceId });
 
         if (!existingDevice.location) {
           existingDevice.location = [];
