@@ -1,9 +1,7 @@
 const express=require('express')
 
 const locationRouter=express.Router();
+const  authenticateToken = require("../Middlewares/jwt");
 
-const { getDeviceLocations}= require("../Controllers/locationController")
-
-locationRouter.get('/deviceLocations/:deviceId', getDeviceLocations);
 
 module.exports=locationRouter;

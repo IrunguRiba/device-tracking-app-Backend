@@ -1,14 +1,16 @@
 const express = require("express");
 const Device = require("../Models/device");
-const mongoose= require("mongoose");
+const mongoose = require("mongoose");
 const {
   userSchema,
   logInSchema,
 } = require("../Middlewares/Validators/userValidator");
 const User = require("../Models/user");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-userLoggedIn = false;
+const authenticateToken = require("../Middlewares/jwt");
+
 
 module.exports = {
   //Sign up logic
@@ -97,9 +99,18 @@ module.exports = {
         return res.status(400).json({ error: "Invalid email or password" });
       }
 
+      const token = jwt.sign(
+        { id: user._id, role: user.role },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "7d" }
+      );
+
       res.status(200).json({
+        authenticateToken,
         message: `Logged in successifully, Welcome back Admin ${user.userName}`,
         user: user,
+        user,
+        token,
         userLoggedIn: true,
       });
     } catch (error) {
@@ -109,150 +120,185 @@ module.exports = {
 
   //Log in logic
   logInUser: async (req, res) => {
-    const { password } = req.body;
+    const { password, components, ip, visitorId } = req.body;
     try {
       const { error, value } = logInSchema.validate(req.body);
       if (error) {
         return res.status(400).json({ error: error.details[0].message });
       }
+
       const user = await User.findOne({ email: value.email });
       if (!user) {
         return res
           .status(400)
           .json({ error: "Email does not exist, kindly register new account" });
       }
+
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return res.status(400).json({ error: "Invalid email or password" });
       }
 
+     
+
+      const token = jwt.sign(
+        {
+          id: user._id,
+          role: user.role,
+          user: user.userName,
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "1d" }
+      );
+
+      const userWithoutPassword = user.toObject();
+      delete userWithoutPassword.password;
+
       res.status(200).json({
-        message: `Logged in successifully, Welcome back ${user.userName}`,
-        user: user,
+        message: `Logged in successfully, Welcome back ${user.userName}`,
+        user: userWithoutPassword,
+        token,
         userLoggedIn: true,
       });
     } catch (error) {
-      console.log(error.details);
+      console.error(error);
+      res.status(500).json({ message: "Internal server error" });
     }
   },
-  getUsers: async(req, res) => {
+  getUsers: async (req, res) => {
     try {
+      if (req.user.role !== "admin") {
+        return res.status(403).json({ error: "Access denied. Admins only." });
+      }
+
       const users = await User.find().populate({
-        path: "deviceInfo", 
+        path: "deviceInfo",
         select: "name model type description status",
         populate: {
           path: "location",
-          select: "longitude latitude timestamp -_id"
-        }
+          select: "longitude latitude timestamp -_id",
+        },
       });
-      res.status(200).json({ 
+
+      res.status(200).json({
         message: "Users fetched successfully",
-        All_Users: users
+        All_Users: users,
       });
     } catch (error) {
-      res.status(500).json({ message: "Error fetching users", error: error.message });
+      res
+        .status(500)
+        .json({ message: "Error fetching users", error: error.message });
     }
   },
- getUserByPin: async (req, res) => {
-const { pin } = req.params;
-try{
-  const requestedUser= await User.findOne({ pin: pin }).populate({
-    path: 'deviceInfo',
-        select: 'name model type description status location',
+  getUserByPin: async (req, res) => {
+    const { pin } = req.params;
+    try {
+      const requestedUser = await User.findOne({ pin: pin }).populate({
+        path: "deviceInfo",
+        select: "name model type description status location",
         populate: {
-          path: 'location',
-          select: 'latitude longitude timestamp -_id', 
-        }
-  });
-  if (!requestedUser) {
-    return res.status(404).json({ message: "User not found" });
-  }
-  const device = requestedUser.deviceInfo;
-  if (device && Array.isArray(device.location) && device.location.length > 0) {
-    device.location.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  }
-  
-  
-const userIsAt=requestedUser.deviceInfo?.location?.[0] || "User location unavailable"
+          path: "location",
+          select: "latitude longitude timestamp -_id",
+        },
+      });
+      if (!requestedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const device = requestedUser.deviceInfo;
+      if (
+        device &&
+        Array.isArray(device.location) &&
+        device.location.length > 0
+      ) {
+        device.location.sort(
+          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        );
+      }
+
+      const userIsAt =
+        requestedUser.deviceInfo?.location?.[0] || "User location unavailable";
       res.status(200).json({
         message: "User found successfully",
         User: requestedUser,
-        LatestLocation: userIsAt? [userIsAt] : []
+        LatestLocation: userIsAt ? [userIsAt] : [],
       });
-} catch (error) {
-  console.error("Error fetching user by pin", error);
-  res.status(500).json({ message: "Error fetching user by pin", error });
-}
- },
- getUserById: async (req, res)=>{
-  const {_id}= req.params;
-
-  try {
-    const existingUser= await User.findById(_id).populate({
-      path: 'deviceInfo',
-          select: 'name model type description status location',
-          populate: {
-            path: 'location',
-            select: 'latitude longitude timestamp -_id', 
-          },
-    });
-
-    if(!existingUser){
-      res.status(401).json({message: "User not found"})
+    } catch (error) {
+      console.error("Error fetching user by pin", error);
+      res.status(500).json({ message: "Error fetching user by pin", error });
     }
+  },
+  getUserById: async (req, res) => {
+    const { _id } = req.params;
 
-    const device = existingUser.deviceInfo;
-  if (device && Array.isArray(device.location) && device.location.length > 0) {
-    device.location.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  }
-  
-  
-const userIsAt=existingUser.deviceInfo?.location?.[0] || "User location unavailable"
-    
-    res.status(200).json({
-      message: "User found successfully",
-      user: existingUser,
-      LatestLocation: userIsAt? [userIsAt] : []
-    });
-  } catch (error) {
-    
-    res.status(400).json({
-      message: "Something went wrong, couldn't get user by id",
-      error: error.message,
-      
-    })
-    console.log(error)
-  }
+    try {
+      const existingUser = await User.findById(_id).populate({
+        path: "deviceInfo",
+        select: "name model type description status location",
+        populate: {
+          path: "location",
+          select: "latitude longitude timestamp -_id",
+        },
+      });
 
- },
+      if (!existingUser) {
+        res.status(401).json({ message: "User not found" });
+      }
 
- deleteUserById: async (req, res)=>{
-  const {_id}= req.params
-  try {
+      const device = existingUser.deviceInfo;
+      if (
+        device &&
+        Array.isArray(device.location) &&
+        device.location.length > 0
+      ) {
+        device.location.sort(
+          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        );
+      }
 
-    if (!mongoose.Types.ObjectId.isValid(_id)) {
-      return res.status(400).json({ message: "Invalid ID format" });
+      const userIsAt =
+        existingUser.deviceInfo?.location?.[0] || "User location unavailable";
+
+      res.status(200).json({
+        message: "User found successfully",
+        user: existingUser,
+        LatestLocation: userIsAt ? [userIsAt] : [],
+      });
+    } catch (error) {
+      res.status(400).json({
+        message: "Something went wrong, couldn't get user by id",
+        error: error.message,
+      });
+      console.log(error);
     }
-     const existingUser= await User.findByIdAndDelete(_id)
+  },
 
-     if(!existingUser){
-res.status(400).json({
-  message: "Something went wrong, user does not exist!"
-})
-     }
-     res.status(200).json({
-      message: "Success... User deleted successifully",
-     Deleted_User: existingUser
-     })
+  deleteUserById: async (req, res) => {
+    const { _id } = req.params;
+    try {
+      if (!mongoose.Types.ObjectId.isValid(_id)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
 
-     
-    
-  } catch (error) {
-    res.status(500).json({
-      message: "Cannot delete user, server problem",
-      Error: error.message || error
-    })
-    
-  }
- }
- };
+      if (req.user.role !== "admin") {
+        return res.status(403).json({ error: "Access denied. Admins only." });
+      }
+
+      const existingUser = await User.findByIdAndDelete(_id);
+
+      if (!existingUser) {
+        res.status(400).json({
+          message: "Something went wrong, user does not exist!",
+        });
+      }
+      res.status(200).json({
+        message: "Success... User deleted successifully",
+        Deleted_User: existingUser,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Cannot delete user, server problem",
+        Error: error.message || error,
+      });
+    }
+  },
+};

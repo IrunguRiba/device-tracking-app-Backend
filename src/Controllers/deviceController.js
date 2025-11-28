@@ -1,54 +1,62 @@
 const Device = require("../Models/device");
 const User = require("../Models/user");
 const Locations = require("../Models/location");
-const mongoose = require("mongoose");
+const mongoose = require("mongoose");      
+const crypto = require('crypto');
 
 
 module.exports = {
   registerMyDevice: async (req, res) => {
-
-    const {_id} = req.params;
-    const { name, type, model, description} = req.body;
-
-    try {       
-
-        const existingUser = await User.findById(_id);
-
+    const { _id } = req.params;
+    const { name, type, model, description } = req.body;
+  
+    try {
+      const existingUser = await User.findById(_id).populate("deviceInfo");
+  
       if (!existingUser) {
         return res.status(401).json({
-          message: "Cannot register Device to this user, User does not exist",
+          message: "Cannot register device to this user, user does not exist",
         });
       }
-
+  
       console.log("User deviceInfo value:", existingUser.deviceInfo);
 
-      if (existingUser.deviceInfo) {
+  const deviceArray = existingUser.deviceInfo || [];
+const deviceExists = deviceArray.some(device =>
+  device.name === name &&
+  device.type === type &&
+  device.model === model &&
+  device.description === description
+);
+
+  
+      if (deviceExists) {
         return res.status(400).json({
-          message: "You already have a registered device",
-          existingDevice: existingUser.deviceInfo
+          message: "Device already registered for this user",
         });
       }
-
-      const newDevice = new Device({ name, type, model, description,  userId: existingUser._id});
-     
+      const newDevice = new Device({ name, type, model, description, userId: existingUser._id });
       const savedDevice = await newDevice.save();
 
-      existingUser.deviceInfo = savedDevice._id;
+      existingUser.deviceInfo = existingUser.deviceInfo || [];
+      existingUser.deviceInfo.push(savedDevice._id);
       await existingUser.save();
-      await existingUser.populate("deviceInfo");
-
       res.status(201).json({
-        message: "Device Registered success",
+        message: "Device registered successfully",
         myDevice: savedDevice,
         User: existingUser.userName,
       });
+  
     } catch (error) {
       console.error(error);
-
-      res.status(500).json({ message: "Error creating device", error });
+      res.status(500).json({
+        message: "Error creating device",
+        error,
+        Error: error.message
+      });
     }
   },
-
+  
   getMyDeviceInfo: async (req, res) => {
     const { _id } = req.params;
     try {

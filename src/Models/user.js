@@ -37,9 +37,11 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  deviceInfo: {
-    type: mongoose.Schema.Types.ObjectId, ref: "Device", default: null 
-  },
+  deviceInfo: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Device",
+    default: []
+  }],
   pin:{
     type: String,
     required: false,
