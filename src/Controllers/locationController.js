@@ -16,6 +16,7 @@ function setupSocketServer(httpServer) {
 
   io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
+    socket.emit('connected', 'Connected to the socket server!');
 
     socket.on('coordinates', async ({ latitude, longitude, userId, deviceId }) => {
       try {
