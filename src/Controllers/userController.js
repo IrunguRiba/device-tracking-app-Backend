@@ -99,18 +99,18 @@ module.exports = {
         return res.status(400).json({ error: "Invalid email or password" });
       }
 
-      // const token = jwt.sign(
-      //   { id: user._id, role: user.role },
-      //   process.env.ACCESS_TOKEN_SECRET,
-      //   { expiresIn: "7d" }
-      // );
+      const token = jwt.sign(
+        { id: user._id, role: user.role },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "7d" }
+      );
 
       res.status(200).json({
         authenticateToken,
         message: `Logged in successifully, Welcome back Admin ${user.userName}`,
         user: user,
         user,
-        // token,
+        token,
         userLoggedIn: true,
       });
     } catch (error) {
@@ -141,15 +141,15 @@ module.exports = {
 
      
 
-      // const token = jwt.sign(
-      //   {
-      //     id: user._id,
-      //     role: user.role,
-      //     user: user.userName,
-      //   },
-      //   process.env.ACCESS_TOKEN_SECRET,
-      //   { expiresIn: "1d" }
-      // );
+      const token = jwt.sign(
+        {
+          id: user._id,
+          role: user.role,
+          user: user.userName,
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "1d" }
+      );
 
       const userWithoutPassword = user.toObject();
       delete userWithoutPassword.password;
@@ -157,7 +157,7 @@ module.exports = {
       res.status(200).json({
         message: `Logged in successfully, Welcome back ${user.userName}`,
         user: userWithoutPassword,
-        // token,
+        token,
         userLoggedIn: true,
       });
     } catch (error) {

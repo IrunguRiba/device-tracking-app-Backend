@@ -18,18 +18,11 @@ module.exports = {
           message: "Cannot register device to this user, user does not exist",
         });
       }
-  
       console.log("User deviceInfo value:", existingUser.deviceInfo);
 
   const deviceArray = existingUser.deviceInfo || [];
-const deviceExists = deviceArray.some(device =>
-  device.name === name &&
-  device.type === type &&
-  device.model === model &&
-  device.description === description
-);
+const deviceExists = deviceArray.some(device => device.name === name && device.type === type && device.model === model && device.description === description);
 
-  
       if (deviceExists) {
         return res.status(400).json({
           message: "Device already registered for this user",

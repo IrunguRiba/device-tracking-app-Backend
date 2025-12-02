@@ -48,7 +48,7 @@ app.use('/api', trackingRoute)
 httpServer.listen(PORT, () => console.log(`httpServer is running on port ${PORT}`));
 
 
-// use this to generate secrets... works just fine
+// This generate secret tokens... works just fine
 // const secretToken= crypto.randomBytes(32).toString('hex');
 // const refreshToken= crypto.randomBytes(32).toString('hex');
 // console.log("SECRET_TOKEN: ", secretToken);
