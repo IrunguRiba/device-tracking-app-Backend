@@ -233,15 +233,12 @@ module.exports = {
     try {
       const existingUser = await User.findById(_id).populate({
         path: "deviceInfo",
-        select: "name model type description status location",
+        select: "name model type description status location visitorId",
         populate: {
           path: "location",
           select: "latitude longitude timestamp -_id",
         }
-      }).populate({
-        path: "session",  
-        select: "visitorId createdAt expiresAt",
-      });
+      })
 
       if (!existingUser) {
         res.status(401).json({ message: "User not found" });

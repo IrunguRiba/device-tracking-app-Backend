@@ -37,6 +37,11 @@ userId:{
     ref:'User',
     required:false
 },
+visitorId:{
+    type: String,
+    required: false,
+    unique: true,
+  },
 createdAt:{
     type:Date,
     default:Date.now
@@ -45,11 +50,7 @@ updatedAt:{
     type:Date,
     default:Date.now
 },
-visitorId:{
-    type: String,
-    required: false,
-    unique: true,
-  }
+
 })
 
 const Device=mongoose.model('Device',deviceSchema);
