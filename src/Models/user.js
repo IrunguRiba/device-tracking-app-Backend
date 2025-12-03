@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema({
     type: [],
     required:false,
     default: null
-  }
+  },
 });
 
 

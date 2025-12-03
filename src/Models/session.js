@@ -1,30 +1,29 @@
 const mongoose = require('mongoose');
 
+
 const sessionSchema = new mongoose.Schema(
   {
     userId: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User', 
-        required: true 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'User', 
+      required: true 
     },
     visitorId: { 
-        type: String, 
-        required: true 
-    },
-    extendedResult: { 
-        type: Object, 
-        required: true 
+      type: String, 
+      required: true, 
+      unique: true 
     },
     createdAt: { 
-        type: Date, 
-        default: Date.now 
+      type: Date, 
+      default: Date.now 
     },
     expiresAt: { 
-        type: Date, 
-        required: true 
+      type: Date, 
+      required: true, 
+      default: () => Date.now() + 30 * 24 * 60 * 60 * 1000  
     },
   },
-  { timestamps: true }
+  { timestamps: true } 
 );
 
 const Session = mongoose.model('Session', sessionSchema);
