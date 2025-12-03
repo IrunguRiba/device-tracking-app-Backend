@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-
 const sessionSchema = new mongoose.Schema(
   {
     userId: { 
@@ -19,12 +18,23 @@ const sessionSchema = new mongoose.Schema(
     },
     expiresAt: { 
       type: Date, 
-      required: true, 
-      default: () => Date.now() + 30 * 24 * 60 * 60 * 1000  
+      required: true
     },
   },
-  { timestamps: true } 
+  { 
+    timestamps: true, 
+    toJSON: { virtuals: true }, 
+    toObject: { virtuals: true } 
+  } 
 );
+
+sessionSchema.pre('save', function(next) {
+  if (!this.expiresAt) {
+    this.expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;  
+  }
+  next();
+});
+sessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); 
 
 const Session = mongoose.model('Session', sessionSchema);
 
