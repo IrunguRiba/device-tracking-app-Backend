@@ -239,7 +239,8 @@ module.exports = {
           select: "latitude longitude timestamp -_id",
         }
       }).populate({
-        path: "session"
+        path: "session",  
+        select: "visitorId createdAt expiresAt",
       });
 
       if (!existingUser) {
