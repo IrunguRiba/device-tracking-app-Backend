@@ -7,10 +7,20 @@ const sessionSchema = new mongoose.Schema(
         ref: 'User', 
         required: true 
     },
+    visitorId: { 
+        type: String, 
+        required: true 
+    },
+    extendedResult: { 
+        type: Object, 
+        required: true 
+    },
     createdAt: { 
-        type: Date,
-         default: Date.now },
-    expiresAt: { type: Date, 
+        type: Date, 
+        default: Date.now 
+    },
+    expiresAt: { 
+        type: Date, 
         required: true 
     },
   },
