@@ -29,12 +29,10 @@ function setupSocketServer(httpServer) {
         existingDevice.location = existingDevice.location || [];
         existingDevice.location.push(newDeviceLocation._id);
         await existingDevice.save();
-        
+
 const existingVisitor = await Session.findOne({ visitorId: visitorId });
 
-if (existingVisitor) {
-  console.log("This Visitor exists, do nothing");
-} else {
+if (!existingVisitor) {
   const newSession = new Session({
     visitorId: visitorId,
     userId: userId, 
@@ -43,6 +41,9 @@ if (existingVisitor) {
 
   await newSession.save();
   console.log("New session saved for visitor:", visitorId);
+  
+} else {
+  console.log("This Visitor exists, do nothing");
 }
 
         
