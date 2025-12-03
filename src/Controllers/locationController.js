@@ -29,7 +29,7 @@ function setupSocketServer(httpServer) {
         existingDevice.location = existingDevice.location || [];
         existingDevice.location.push(newDeviceLocation._id);
         await existingDevice.save();
-
+console.log("Visitor id",visitorId)
         const existingVisitor = await Session.findOne({ visitorId });
 
         if (!existingVisitor) {
@@ -41,7 +41,7 @@ function setupSocketServer(httpServer) {
         
           const savedSession = await newSession.save();
           console.log("New session created:", savedSession);
-          
+
           await existingUser.save();
           console.log("User's session updated:", existingUser.session);
         } else {
