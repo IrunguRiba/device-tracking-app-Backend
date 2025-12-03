@@ -4,6 +4,8 @@ const Device = require('../Models/device');
 const Location = require('../Models/location');
 const User = require("../Models/user");
 const crypto = require('crypto');
+const session=require('express-session')
+const Session=require("../Models/session")
 
 // Socket server setup
 function setupSocketServer(httpServer) {
@@ -18,7 +20,7 @@ function setupSocketServer(httpServer) {
     console.log(`Client connected: ${socket.id}`);
     socket.emit('connected', 'Connected to the socket server!');
 
-    socket.on('coordinates', async ({ latitude, longitude, userId, deviceId }) => {
+    socket.on('coordinates', async ({ latitude, longitude, userId, deviceId, visitorId, extendedResult }) => {
       try {
         const existingUser = await User.findById(userId);
         if (!existingUser) return console.log(`User not found: ${userId}`);
@@ -30,6 +32,19 @@ function setupSocketServer(httpServer) {
         existingDevice.location = existingDevice.location || [];
         existingDevice.location.push(newDeviceLocation._id);
         await existingDevice.save();
+
+        const session = new Session({
+          visitorId:visitorId,
+          extendedResult:  extendedResult,
+          createdAt: Date.now(),
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000, 
+        });
+        await session.save(); 
+        res.cookie('access-token', token, {
+          httpOnly: true,  
+          maxAge: 24 * 60 * 60 * 1000,  
+        });
+        console.log('Access Cookie saved');
 
         console.log(`Location stored for user: ${userId}, device: ${deviceId}`);
         socket.emit('location_saved', newDeviceLocation);

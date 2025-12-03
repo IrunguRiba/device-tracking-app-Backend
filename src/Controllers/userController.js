@@ -105,6 +105,7 @@ module.exports = {
         { expiresIn: "7d" }
       );
 
+      console.log(req.session); 
       res.status(200).json({
         authenticateToken,
         message: `Logged in successifully, Welcome back Admin ${user.userName}`,
@@ -120,14 +121,14 @@ module.exports = {
 
   //Log in logic
   logInUser: async (req, res) => {
-    const { password, components, ip, visitorId } = req.body;
+    const { password } = req.body;
     try {
       const { error, value } = logInSchema.validate(req.body);
       if (error) {
         return res.status(400).json({ error: error.details[0].message });
       }
 
-      const user = await User.findOne({ email: value.email });
+      const user = await User.findOne({ email: value.email })
       if (!user) {
         return res
           .status(400)
@@ -151,6 +152,7 @@ module.exports = {
         { expiresIn: "1d" }
       );
 
+      
       const userWithoutPassword = user.toObject();
       delete userWithoutPassword.password;
 
@@ -178,6 +180,7 @@ module.exports = {
           path: "location",
           select: "longitude latitude timestamp -_id",
         },
+        
       });
 
       res.status(200).json({
@@ -237,13 +240,14 @@ module.exports = {
         populate: {
           path: "location",
           select: "latitude longitude timestamp -_id",
-        },
+        }
       });
 
       if (!existingUser) {
         res.status(401).json({ message: "User not found" });
       }
 
+      const sessions = await Session.find({ userId: existingUser._id })
       const device = existingUser.deviceInfo;
       if (
         device &&
@@ -262,6 +266,7 @@ module.exports = {
         message: "User found successfully",
         user: existingUser,
         LatestLocation: userIsAt ? [userIsAt] : [],
+        sessions
       });
     } catch (error) {
       res.status(400).json({
