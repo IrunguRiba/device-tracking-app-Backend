@@ -3,7 +3,7 @@ const { Server } = require("socket.io");
 const Device = require('../Models/device');
 const Location = require('../Models/location');
 const User = require("../Models/user");
-const Session = require("../Models/session");
+
 
 function setupSocketServer(httpServer) {
   const io = new Server(httpServer, {

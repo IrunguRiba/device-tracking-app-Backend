@@ -1,6 +1,7 @@
 const express = require("express");
 const Device = require("../Models/device");
 const mongoose = require("mongoose");
+const Session = require("../Models/session");
 const {
   userSchema,
   logInSchema,
@@ -139,9 +140,6 @@ module.exports = {
       if (!isMatch) {
         return res.status(400).json({ error: "Invalid email or password" });
       }
-
-     
-
       const token = jwt.sign(
         {
           id: user._id,
