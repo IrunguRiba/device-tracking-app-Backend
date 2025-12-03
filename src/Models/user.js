@@ -52,6 +52,11 @@ const userSchema = new mongoose.Schema({
     required:false,
     default: null
   },
+  session:{
+    type: String,
+    required: false,
+    unique: true,
+  }
 });
 
 
