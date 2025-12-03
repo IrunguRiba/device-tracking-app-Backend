@@ -25,37 +25,11 @@ function setupSocketServer(httpServer) {
         const existingDevice = await Device.findById(deviceId);
         if (!existingDevice) return console.log(`Device not found: ${deviceId}`);
 
-        const newDeviceLocation = await Location.create({ latitude, longitude, userId, deviceId });
+        const newDeviceLocation = await Location.create({ latitude, longitude, userId, deviceId, visitorId });
         existingDevice.location = existingDevice.location || [];
         existingDevice.location.push(newDeviceLocation._id);
         await existingDevice.save();
-console.log("Visitor id",visitorId)
-        const existingVisitor = await Session.findOne({ visitorId });
 
-    
-
-        if (!existingVisitor) {
-
-          const newSession = new Session({
-            visitorId: visitorId,
-            userId: userId,
-          });
-          const savedSession = await newSession.save();
-          console.log("New session created:", savedSession);
-        } else {
-          const isSessionExpired = existingVisitor.expiresAt < Date.now();
-          
-          if (isSessionExpired) {
-            existingVisitor.expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
-            await existingVisitor.save();
-            console.log("Session expired, new expiration date set:", existingVisitor);
-          } else {
-            console.log("Session is still valid:", existingVisitor);
-          }
-        }
-        
-
-        
         console.log(`Location stored for user: ${userId}, device: ${deviceId}, visitorId: ${visitorId}`);
         socket.emit('location_saved', newDeviceLocation);
       } catch (error) {

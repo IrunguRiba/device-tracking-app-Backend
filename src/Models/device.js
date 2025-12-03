@@ -44,7 +44,12 @@ createdAt:{
 updatedAt:{
     type:Date,
     default:Date.now
-}
+},
+visitorId:{
+    type: String,
+    required: false,
+    unique: true,
+  }
 })
 
 const Device=mongoose.model('Device',deviceSchema);

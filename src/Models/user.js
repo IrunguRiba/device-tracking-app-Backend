@@ -52,11 +52,7 @@ const userSchema = new mongoose.Schema({
     required:false,
     default: null
   },
-  session:{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Session",
-    default: null
-  }
+
 });
 
 
