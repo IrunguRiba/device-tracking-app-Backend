@@ -4,8 +4,7 @@ const Device = require('../Models/device');
 const Location = require('../Models/location');
 const User = require("../Models/user");
 const crypto = require('crypto');
-const Session = require("../Models/session");
-
+const Session=require('../Models/session')
 function setupSocketServer(httpServer) {
   const io = new Server(httpServer, {
     cors: {
@@ -25,29 +24,41 @@ function setupSocketServer(httpServer) {
 
         const existingDevice = await Device.findById(deviceId);
         if (!existingDevice) return console.log(`Device not found: ${deviceId}`);
+
         const newDeviceLocation = await Location.create({ latitude, longitude, userId, deviceId });
         existingDevice.location = existingDevice.location || [];
         existingDevice.location.push(newDeviceLocation._id);
-
-    
-        res.cookie('visitorId', visitorId, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true }); 
-        console.log(`VISITOR: ${visitorId}`)
-
-        await Session.create({ userId, visitorId });
-
         await existingDevice.save();
+        
+const existingVisitor = await Session.findOne({ visitorId: visitorId });
 
-        console.log(`Location stored for user: ${userId}, device: ${deviceId}`);
+if (existingVisitor) {
+  console.log("This Visitor exists, do nothing");
+} else {
+  const newSession = new Session({
+    visitorId: visitorId,
+    userId: userId, 
+    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000  
+  });
+
+  await newSession.save();
+  console.log("New session saved for visitor:", visitorId);
+}
+
+        
+        console.log(`Location stored for user: ${userId}, device: ${deviceId}, visitorId: ${visitorId}`);
         socket.emit('location_saved', newDeviceLocation);
       } catch (error) {
         console.error("Error saving location:", error);
       }
     });
-
     socket.on("disconnect", () => {
       console.log(`Client disconnected: ${socket.id}`);
-    });
+    });    
   });
 }
+
+
+
 
 module.exports = { setupSocketServer };
