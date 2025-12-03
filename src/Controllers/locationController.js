@@ -30,21 +30,24 @@ function setupSocketServer(httpServer) {
         existingDevice.location.push(newDeviceLocation._id);
         await existingDevice.save();
 
-const existingVisitor = await Session.findOne({ visitorId: visitorId });
+        const existingVisitor = await Session.findOne({ visitorId });
 
-if (!existingVisitor) {
-  const newSession = new Session({
-    visitorId: visitorId,
-    userId: userId, 
-    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000  
-  });
-
-  await newSession.save();
-  console.log("New session saved for visitor:", visitorId);
-  
-} else {
-  console.log("This Visitor exists, do nothing");
-}
+        if (!existingVisitor) {
+          const newSession = new Session({
+            visitorId: visitorId,
+            userId: userId,
+            expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000  
+          });
+        
+          const savedSession = await newSession.save();
+          console.log("New session created:", savedSession);
+          
+          await existingUser.save();
+          console.log("User's session updated:", existingUser.session);
+        } else {
+          console.log("This Visitor exists, do nothing");
+        }
+        
 
         
         console.log(`Location stored for user: ${userId}, device: ${deviceId}, visitorId: ${visitorId}`);
