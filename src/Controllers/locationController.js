@@ -4,8 +4,6 @@ const Device = require('../Models/device');
 const Location = require('../Models/location');
 const User = require("../Models/user");
 const crypto = require('crypto');
-const cookieParser = require('cookie-parser'); 
-const Session=require('../Models/session')
 
 // Socket server setup
 function setupSocketServer(httpServer) {
@@ -16,23 +14,11 @@ function setupSocketServer(httpServer) {
     }
   });
 
-  io.use((socket, next) => {
-    const cookie = socket.request.headers.cookie;
-    if (cookie) {
-      const cookies = cookieParser.parse(cookie);
-      const sessionId = cookies['connect.sid'];  
-      socket.sessionID = sessionId;
-      next();
-    } else {
-      next(new Error("No session cookie found"));
-    }
-  });
-
   io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
     socket.emit('connected', 'Connected to the socket server!');
 
-    socket.on('coordinates', async ({ latitude, longitude, userId, deviceId,  visitorId, extendedResult }) => {
+    socket.on('coordinates', async ({ latitude, longitude, userId, deviceId }) => {
       try {
         const existingUser = await User.findById(userId);
         if (!existingUser) return console.log(`User not found: ${userId}`);
@@ -43,18 +29,6 @@ function setupSocketServer(httpServer) {
         const newDeviceLocation = await Location.create({ latitude, longitude, userId, deviceId });
         existingDevice.location = existingDevice.location || [];
         existingDevice.location.push(newDeviceLocation._id);
-
-        const session = new Session({
-          userId: userId,
-          visitorId: visitorId,
-          extendedResult: extendedResult,
-          expiresAt: Date.now() + 24 * 60 * 60 * 1000,  
-        });
-        
-        await session.save();
-        console.log("Session data saved:", session);
-       
-
         await existingDevice.save();
 
         console.log(`Location stored for user: ${userId}, device: ${deviceId}`);
