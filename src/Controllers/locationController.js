@@ -4,7 +4,6 @@ const Device = require('../Models/device');
 const Location = require('../Models/location');
 const User = require("../Models/user");
 const crypto = require('crypto');
-const Session=require('../Models/session')
 function setupSocketServer(httpServer) {
   const io = new Server(httpServer, {
     cors: {
