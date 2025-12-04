@@ -23,8 +23,11 @@ function setupSocketServer(httpServer) {
 
         const existingDevice = await Device.findById(deviceId);
         if (!existingDevice) return console.log(`Device not found: ${deviceId}`);
+        //save visitorId
+        existingDevice.visitorId = visitorId;  
+        await existingDevice.save(); 
 
-        const newDeviceLocation = await Location.create({ latitude, longitude, userId, deviceId, visitorId });
+        const newDeviceLocation = await Location.create({ latitude, longitude, userId, deviceId });
         existingDevice.location = existingDevice.location || [];
         existingDevice.location.push(newDeviceLocation._id);
         await existingDevice.save();
