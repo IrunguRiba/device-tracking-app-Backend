@@ -55,8 +55,6 @@ const userSchema = new mongoose.Schema({
 
 });
 
-
-//This will generate a pin on create of a user
 userSchema.pre("save", async function (next) {
   if (!this.pin) {
     this.pin = Math.floor(100000 + Math.random() * 900000).toString();
