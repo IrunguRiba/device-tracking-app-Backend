@@ -233,7 +233,7 @@ module.exports = {
     try {
       const existingUser = await User.findById(_id).populate({
         path: "deviceInfo",
-        select: "name model type description status location visitorId",
+        select: 'name model type description status location visitorId',
         populate: {
           path: "location",
           select: "latitude longitude timestamp -_id",

@@ -41,6 +41,7 @@ visitorId:{
     type: String,
     required: false,
     unique: true,
+    default:null
   },
 createdAt:{
     type:Date,
