@@ -23,7 +23,6 @@ function setupSocketServer(httpServer) {
 
         const existingDevice = await Device.findById(deviceId);
         if (!existingDevice) return console.log(`Device not found: ${deviceId}`);
-        //save visitorId
         existingDevice.visitorId = visitorId;  
         await existingDevice.save(); 
 
