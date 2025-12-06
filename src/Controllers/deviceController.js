@@ -85,6 +85,28 @@ const deviceExists = deviceArray.some(device => device.name === name && device.t
     }
   },
 
+  getAllDevices: async (req, res)=>{
+
+    try{
+      const allDevices = await Device.find({})
+      .populate("location", "longitude latitude timestamp");
+
+      res.status(200).json({
+        message: "All devices fetched successfully",
+        Devices: allDevices,
+      });
+
+    }catch(error){
+      console.error("Error fetching devices", error);
+
+      res.status(500).json({
+        message: "An internal server error occurred.",
+        error: error.message,
+      });
+    }
+
+  },
+
   updateMyDevice: async (req, res) => {
     const {_id} = req.params;
     const updateData = req.body;
