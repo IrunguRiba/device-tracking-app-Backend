@@ -120,7 +120,7 @@ module.exports = {
 
   //Log in logic
   logInUser: async (req, res) => {
-    const { password, components, ip, visitorId } = req.body;
+    const { password } = req.body;
     try {
       const { error, value } = logInSchema.validate(req.body);
       if (error) {
@@ -138,9 +138,6 @@ module.exports = {
       if (!isMatch) {
         return res.status(400).json({ error: "Invalid email or password" });
       }
-
-     
-
       const token = jwt.sign(
         {
           id: user._id,
@@ -150,6 +147,9 @@ module.exports = {
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "1d" }
       );
+      user.token = token;
+      await user.save();
+      console.log("User token saved success", token)
 
       const userWithoutPassword = user.toObject();
       delete userWithoutPassword.password;
@@ -157,7 +157,39 @@ module.exports = {
       res.status(200).json({
         message: `Logged in successfully, Welcome back ${user.userName}`,
         user: userWithoutPassword,
-        token,
+        token: token,
+        userLoggedIn: true,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  },
+  signBack: async (req, res)=>{
+    const { password } = req.body;
+    try {
+      const { error, value } = logInSchema.validate(req.body);
+      if (error) {
+        return res.status(400).json({ error: error.details[0].message });
+      }
+
+      const user = await User.findOne({ email: value.email });
+      if (!user) {
+        return res
+          .status(400)
+          .json({ error: "Email does not exist, kindly register new account" });
+      }
+
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ error: "Invalid email or password" });
+      }
+      const userWithoutPassword = user.toObject();
+      delete userWithoutPassword.password;
+
+      res.status(200).json({
+        message: `Logged in successfully, Welcome back ${user.userName}`,
+        user: userWithoutPassword,
         userLoggedIn: true,
       });
     } catch (error) {
@@ -190,6 +222,7 @@ module.exports = {
         .json({ message: "Error fetching users", error: error.message });
     }
   },
+
   getUserByPin: async (req, res) => {
     const { pin } = req.params;
     try {
@@ -270,6 +303,27 @@ module.exports = {
       });
       console.log(error);
     }
+  },
+  getUserByEmailForValidation: async (req, res)=>{
+    const {email}= req.body
+    try {
+      const existingUser= await User.findOne({email});
+      if(!existingUser){
+ res.status(400).json({message: "User email not found!"})
+ return;
+      }
+      
+      res.status(200).json({
+        message: "User token found",
+        token: existingUser.token, 
+        userId: existingUser._id
+      })
+      
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+
   },
 
   deleteUserById: async (req, res) => {

@@ -16,9 +16,6 @@ const crypto = require('crypto');
 const authenticateToken = require("./src/Middlewares/jwt");
 
 
-
-
-
 app.use(cors(
   {
     origin: "*",

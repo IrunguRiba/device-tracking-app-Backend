@@ -52,6 +52,12 @@ const userSchema = new mongoose.Schema({
     required:false,
     default: null
   },
+  token:{
+    type: String,
+    required: false,
+    unique: true,
+
+  }
 
 });
 
