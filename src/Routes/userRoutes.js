@@ -10,7 +10,7 @@ router.post("/userLogIn", logInUser);
 router.post("/newAdmin", adminRegister)
 router.post ("/adminLogIn", adminLogIn)
 router.post('/userByEmail', getUserByEmailForValidation)
-router.post('/signBack',  signBack)
+router.post('/signBack', authenticateToken, signBack)
 router.get("/getUsers", authenticateToken, getUsers);
 router.get('/getUser/:_id', authenticateToken,  getUserById)
 router.get('/getUserByPin/:pin', authenticateToken,   getUserByPin);
