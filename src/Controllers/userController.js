@@ -106,7 +106,6 @@ module.exports = {
       );
 
       res.status(200).json({
-        authenticateToken,
         message: `Logged in successifully, Welcome back Admin ${user.userName}`,
         user: user,
         user,
@@ -147,11 +146,7 @@ module.exports = {
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "1d" }
       );
-      user.token = token;
-      await user.save();
-      console.log("User token saved success", token)
-
-      const userWithoutPassword = user.toObject();
+          const userWithoutPassword = user.toObject();
       delete userWithoutPassword.password;
 
       res.status(200).json({
@@ -184,6 +179,16 @@ module.exports = {
       if (!isMatch) {
         return res.status(400).json({ error: "Invalid email or password" });
       }
+      const token = jwt.sign(
+        {
+          id: user._id,
+          role: user.role,
+          user: user.userName,
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "1d" }
+      );
+      
       const userWithoutPassword = user.toObject();
       delete userWithoutPassword.password;
 
@@ -191,6 +196,7 @@ module.exports = {
         message: `Logged in successfully, Welcome back ${user.userName}`,
         user: userWithoutPassword,
         userLoggedIn: true,
+        token: token,
       });
     } catch (error) {
       console.error(error);
@@ -274,7 +280,7 @@ module.exports = {
       })
 
       if (!existingUser) {
-        res.status(401).json({ message: "User not found" });
+        return res.status(401).json({ message: "User not found" });
       }
 
       const device = existingUser.deviceInfo;
@@ -303,27 +309,6 @@ module.exports = {
       });
       console.log(error);
     }
-  },
-  getUserByEmailForValidation: async (req, res)=>{
-    const {email}= req.body
-    try {
-      const existingUser= await User.findOne({email});
-      if(!existingUser){
- res.status(400).json({message: "User email not found!"})
- return;
-      }
-      
-      res.status(200).json({
-        message: "User token found",
-        token: existingUser.token, 
-        userId: existingUser._id
-      })
-      
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
-
   },
 
   deleteUserById: async (req, res) => {
