@@ -102,7 +102,7 @@ module.exports = {
       const token = jwt.sign(
         { id: user._id, role: user.role },
         process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: "7d" }
+        { expiresIn: "30d" }
       );
 
       res.status(200).json({
@@ -144,7 +144,7 @@ module.exports = {
           user: user.userName,
         },
         process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: "1d" }
+        { expiresIn: "30d" }
       );
           const userWithoutPassword = user.toObject();
       delete userWithoutPassword.password;
