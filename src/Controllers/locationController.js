@@ -37,10 +37,18 @@ function setupSocketServer(httpServer) {
         console.error("Error saving location:", error);
       }
     });
+    socket.on('send-request', async({ request})=>{
+console.log("Request: ",  request);
+io.emit('receivedNotification', { request });
+
+console.log("Notification broadcasted");
+
+    })
     socket.on("disconnect", () => {
       console.log(`Client disconnected: ${socket.id}`);
     });    
   });
+ 
 }
 
 module.exports = { setupSocketServer };
